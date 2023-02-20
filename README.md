@@ -1,43 +1,35 @@
-# DualStyleGAN - Official PyTorch Implementation
+# DualStyleGAN - Mix | 基于 DSGAN 官方 PyTorch 项目的自定义修改
 
 <img src="./doc_images/overview.jpg" width="96%" height="96%">
 
-This repository provides the official PyTorch implementation for the following paper:
+原始论文:
 
 **Pastiche Master: Exemplar-Based High-Resolution Portrait Style Transfer**<br>
 [Shuai Yang](https://williamyang1991.github.io/), [Liming Jiang](https://liming-jiang.com/), [Ziwei Liu](https://liuziwei7.github.io/) and [Chen Change Loy](https://www.mmlab-ntu.com/person/ccloy/)<br>
 In CVPR 2022.<br>
-[**Project Page**](https://www.mmlab-ntu.com/project/dualstylegan/) | [**Paper**](https://arxiv.org/abs/2203.13248) | [**Supplementary Video**](https://www.youtube.com/watch?v=scZTu77jixI)
-> **Abstract:** *Recent studies on StyleGAN show high performance on artistic portrait generation by transfer learning with limited data. In this paper, we explore more challenging exemplar-based high-resolution portrait style transfer by introducing a novel <b>DualStyleGAN</b> with flexible control of dual styles of the original face domain and the extended artistic portrait domain. Different from StyleGAN, DualStyleGAN provides a natural way of style transfer by characterizing the content and style of a portrait with an <b>intrinsic style path</b> and a new <b>extrinsic style path</b>, respectively. The delicately designed extrinsic style path enables our model to modulate both the color and complex structural styles hierarchically to precisely pastiche the style example. Furthermore, a novel progressive fine-tuning scheme is introduced to smoothly transform the generative space of the model to the target domain, even with the above modifications on the network architecture. Experiments demonstrate the superiority of DualStyleGAN over state-of-the-art methods in high-quality portrait style transfer and flexible style control.*
+[**项目主页**](https://www.mmlab-ntu.com/project/dualstylegan/) | [**论文**](https://arxiv.org/abs/2203.13248) | [**相关视频**](https://www.youtube.com/watch?v=scZTu77jixI)
 
-**Features**:<br> 
+> **摘要:** *近期，在学习 StyleGAN 的过程中我们发现，StyleGAN 只通过有限数据的训练学习，就在人脸艺术肖像风格迁移（下称 **人脸风格化** 或 **人像风格转移**） 工作中表现得很出色。*
+*在本文中，我们通过引入一种名为 DualStyleGAN 的较新颖的技术来探索更具挑战性的基于样本的高分辨率人脸风格化，可以灵活控制原始人脸和艺术肖像方面的双重风格。*
+*不同于 StyleGAN，DualStyleGAN 分别通过**内在风格路径**和新的**外在风格路径**来表征图像内容和某个艺术画的风格（Style），以此来提供更自然的风格迁移方法。精心设计的外在风格路径使我们的模型能够分层调整颜色和复杂的结构风格，从而精确地贴合给出的风格图示。*
+*此外，我们还引入了一种新颖的渐进式微调方案，使得即使在对网络架构进行上述修改的情况下，也可以将模型的生成空间平滑地转换到目标风格上。*
+*实验证明， DualStyleGAN 在高质量的人像风格迁移和灵活的风格控制方面优于目前其他的先进的方法。*
+
+**关键词**:<br> 
 **High-Resolution** (1024) | **Training Data-Efficient** (~200 Images) | **Exemplar-Based Color and Structure Transfer**
 
-## Updates
 
-- [02/2023] Add `--wplus` in style_transfer.py to use original w+ pSp encoder rather than z+.
-- [09/2022] Pre-trained models in three new [styles](#combine-dualstylegan-with-state-of-the-art-diffusion-model) (feat. StableDiffusion) are released. 
-- [07/2022] Source code license is updated.
-- [03/2022] Paper and supplementary video are released.
-- [03/2022] Web demo is created.
-- [03/2022] Code is released.
-- [03/2022] This website is created.
+## 官方 Web Demo
+Web Demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/hysts/DualStyleGAN) or [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Gradio-Blocks/DualStyleGAN)
 
 
-## Web Demo
-
-Integrated into [Huggingface Spaces 🤗](https://huggingface.co/spaces) using [Gradio](https://github.com/gradio-app/gradio). Try out the Web Demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/hysts/DualStyleGAN) or [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Gradio-Blocks/DualStyleGAN)
-
-
-
-
-## Installation
+## 安装
 **Clone this repo:**
 ```bash
 git clone https://github.com/williamyang1991/DualStyleGAN.git
 cd DualStyleGAN
 ```
-**Dependencies:**
+**依赖:**
 
 All dependencies for defining the environment are provided in `environment/dualstylegan_env.yaml`.
 We recommend running this repository using [Anaconda](https://docs.anaconda.com/anaconda/install/):
@@ -46,7 +38,7 @@ conda env create -f ./environment/dualstylegan_env.yaml
 ```
 We use CUDA 10.1 so it will install PyTorch 1.7.1 (corresponding to [Line 22](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L22), [Line 25](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L25), [Line 26](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L26) of `dualstylegan_env.yaml`). Please install PyTorch that matches your own CUDA version following [https://pytorch.org/](https://pytorch.org/).
 
-## (1) Dataset Preparation
+## (1) 数据集准备
 
 Cartoon, Caricature and Anime datasets can be downloaded from their official pages.
 We also provide the script to build new datasets.
@@ -63,7 +55,7 @@ We also provide the script to build new datasets.
 
 <br/>
 
-## (2) Inference for Style Transfer and Artistic Portrait Generation
+## (2) 风格转移与生成的简单流程
 
 ### Inference Notebook 
 <a href="http://colab.research.google.com/github/williamyang1991/DualStyleGAN/blob/master/notebooks/inference_playground.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" height=22.5></a>  
@@ -72,7 +64,7 @@ The notebook will download the necessary pretrained models and run inference on 
 
 If no GPU is available, you may refer to [Inference on CPU](./model/stylegan/op_cpu#readme), and set `device = 'cpu'` in the notebook.
 
-### Pretrained Models
+### 模型的预处理
 
 Pretrained models can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1GZQ6Gs5AzJq9lUL-ldIQexi0JYPKNy8b?usp=sharing) or [Baidu Cloud](https://pan.baidu.com/s/1sOpPszHfHSgFsgw47S6aAA ) (access code: cvpr):
 
@@ -166,9 +158,9 @@ More options can be found via `python generate.py -h`.
 
 <br/>
 
-## (3) Training DualStyleGAN
+## (3) 训练 DualStyleGAN
 
-Download the supporting models to the `./checkpoint/` folder:
+下载支撑模型到 `./checkpoint/` 目录下:
 
 | Model | Description |
 | :--- | :--- |
