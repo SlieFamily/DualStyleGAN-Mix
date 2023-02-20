@@ -2,7 +2,12 @@ name: dualstylegan_env
 channels:
   - pytorch
   - conda-forge
-  - defaults
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/pro
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - ca-certificates=2022.2.1=h06a4308_0
@@ -34,4 +39,5 @@ dependencies:
     - scipy==1.7.0 
     - tqdm==4.61.2
     - wget==3.2
+    - -i https://pypi.tuna.tsinghua.edu.cn/simple
 prefix: ~/anaconda3/envs/dualstylegan_env
