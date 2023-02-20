@@ -169,35 +169,41 @@ More options can be found via `python generate.py -h`.
 
 ### Facial Destylization
 
-**Step 1: Prepare data.** Prepare the dataset in `./data/DATASET_NAME/images/train/`. First create lmdb datasets:
+**Step 1:数据准备.** 将数据集放入 `./data/DATASET_NAME/images/train/`目录. 
+首先生成 [lmdb](https://zhuanlan.zhihu.com/p/70359311/) 数据集:
 ```python
 python ./model/stylegan/prepare_data.py --out LMDB_PATH --n_worker N_WORKER --size SIZE1,SIZE2,SIZE3,... DATASET_PATH
 ```
-For example, download 317 Cartoon images into `./data/cartoon/images/train/` and run 
+
+例如, 下载 317 张 `Cartoon` 图像 保存于 `./data/cartoon/images/train/` 中，然后运行：
 > python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 --size 1024 ./data/cartoon/images/
+
+其中的 `1024` 即是 `Cartoon` 数据集中每张图像的长宽。
 
 **Step 2: Fine-tune StyleGAN.** Fine-tune StyleGAN in distributed settings:
 ```python
 python -m torch.distributed.launch --nproc_per_node=N_GPU --master_port=PORT finetune_stylegan.py --batch BATCH_SIZE \
        --ckpt FFHQ_MODEL_PATH --iter ITERATIONS --style DATASET_NAME --augment LMDB_PATH
 ```
-Take the cartoon dataset for example, run (batch size of 8\*4=32 is recommended)
+继续以 `cartoon dataset` 为例, 运行 (建议将 batch size of 设置为 8\*4=32)
 > python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_stylegan.py --iter 600
                           --batch 4 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon
                           --augment ./data/cartoon/lmdb/
 
-The fine-tuned model can be found in `./checkpoint/cartoon/finetune-000600.pt`. Intermediate results are saved in `./log/cartoon/`.
+fine-tuned model 模型将会 放入 `./checkpoint/cartoon/finetune-000600.pt`. 中间结果或数据放入 `./log/cartoon/`.
 
 **Step 3: Destylize artistic portraits.** 
 ```python
 python destylize.py --model_name FINETUNED_MODEL_NAME --batch BATCH_SIZE --iter ITERATIONS DATASET_NAME
 ```
-Take the cartoon dataset for example, run:
+继续以 `cartoon dataset` 为例, 运行:
 > python destylize.py --model_name finetune-000600.pt --batch 1 --iter 300 cartoon
 
-The intrinsic and extrinsic style codes are saved in `./checkpoint/cartoon/instyle_code.npy` and `./checkpoint/cartoon/exstyle_code.npy`, respectively. Intermediate results are saved in `./log/cartoon/destylization/`.
-To speed up destylization, set `--batch` to large value like 16. 
-For styles severely different from real faces, set `--truncation` to small value like 0.5 to make the results more photo-realistic (it enables DualStyleGAN to learn larger structrue deformations).
+内外部风格(Style)将会分别存放于 `./checkpoint/cartoon/instyle_code.npy` 和 `./checkpoint/cartoon/exstyle_code.npy`之中, 中间结果或数据放入`./log/cartoon/destylization/`.
+
+为了快速进行去风格化处理, 可以设置 `--batch` 的参数值为较大的数，比如 16. 
+
+对于与真实面孔严重不同的 Style，可设置 `--truncation` 为较小的值，比如 0.5，以使结果更逼真（它使 DualStyleGAN 能够学习更大的结构变形）。
 
 
 ### Progressive Fine-Tuning 
