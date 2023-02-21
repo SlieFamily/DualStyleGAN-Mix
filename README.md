@@ -1,15 +1,16 @@
-# DualStyleGAN - Mix | 基于 DSGAN 官方 PyTorch 项目的自定义修改
+# DualStyleGAN - Mix | 基于官方 PyTorch 项目的自定义修改
 
 <img src="./doc_images/overview.jpg" width="96%" height="96%">
 
-原始论文:
-
-**Pastiche Master: Exemplar-Based High-Resolution Portrait Style Transfer**<br>
+原始论文:**Pastiche Master: Exemplar-Based High-Resolution Portrait Style Transfer**<br>
 [Shuai Yang](https://williamyang1991.github.io/), [Liming Jiang](https://liming-jiang.com/), [Ziwei Liu](https://liuziwei7.github.io/) and [Chen Change Loy](https://www.mmlab-ntu.com/person/ccloy/)<br>
 In CVPR 2022.<br>
+
+
 [**项目主页**](https://www.mmlab-ntu.com/project/dualstylegan/) | [**论文**](https://arxiv.org/abs/2203.13248) | [**相关视频**](https://www.youtube.com/watch?v=scZTu77jixI)
 
-> **摘要:** *近期，在学习 StyleGAN 的过程中我们发现，StyleGAN 只通过有限数据的训练学习，就在人脸艺术肖像风格迁移（下称 **人脸风格化** 或 **人像风格转移**） 工作中表现得很出色。*
+> **摘要:** <br>
+> *近期，在学习 StyleGAN 的过程中我们发现，StyleGAN 只通过有限数据的训练学习，就在人脸艺术肖像风格迁移（下称 **人脸风格化** 或 **人像风格转移**） 工作中表现得很出色。*
 *在本文中，我们通过引入一种名为 DualStyleGAN 的较新颖的技术来探索更具挑战性的基于样本的高分辨率人脸风格化，可以灵活控制原始人脸和艺术肖像方面的双重风格。*
 *不同于 StyleGAN，DualStyleGAN 分别通过**内在风格路径**和新的**外在风格路径**来表征图像内容和某个艺术画的风格（Style），以此来提供更自然的风格迁移方法。精心设计的外在风格路径使我们的模型能够分层调整颜色和复杂的结构风格，从而精确地贴合给出的风格图示。*
 *此外，我们还引入了一种新颖的渐进式微调方案，使得即使在对网络架构进行上述修改的情况下，也可以将模型的生成空间平滑地转换到目标风格上。*
@@ -24,24 +25,27 @@ Web Demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hu
 
 
 ## 安装
-**Clone this repo:**
+**克隆仓库:**
 ```bash
 git clone https://github.com/williamyang1991/DualStyleGAN.git
 cd DualStyleGAN
 ```
 **依赖:**
 
-All dependencies for defining the environment are provided in `environment/dualstylegan_env.yaml`.
-We recommend running this repository using [Anaconda](https://docs.anaconda.com/anaconda/install/):
+环境内的所有依赖包均在 `environment/dualstylegan_env.yaml` 中列出.
+推荐使用本仓库的 [Anaconda](https://docs.anaconda.com/anaconda/install/) 进行安装:
 ```bash
 conda env create -f ./environment/dualstylegan_env.yaml
 ```
-We use CUDA 10.1 so it will install PyTorch 1.7.1 (corresponding to [Line 22](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L22), [Line 25](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L25), [Line 26](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L26) of `dualstylegan_env.yaml`). Please install PyTorch that matches your own CUDA version following [https://pytorch.org/](https://pytorch.org/).
+原项目所使用的是 CUDA 10.1，因此对应Torch版本是 PyTorch 1.7.1 (在文件 `dualstylegan_env.yaml` 中的 [Line 22](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L22), [Line 25](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L25), [Line 26](https://github.com/williamyang1991/DualStyleGAN/blob/main/environment/dualstylegan_env.yaml#L26) 中有着对应版本号 ). 
+
+你可以通过[https://pytorch.org/](https://pytorch.org/) 查询并下载安装与你使用的 CUDA 相符版本的 PyTorch
 
 ## (1) 数据集准备
 
-Cartoon, Caricature and Anime datasets can be downloaded from their official pages.
-We also provide the script to build new datasets.
+Cartoon, Caricature 以及 Anime 数据集 可在如下的官方渠道中进行下载.
+
+我们也将提供构建新数据集的脚本.
 
 | Dataset | Description |
 | :--- | :--- |
@@ -55,18 +59,21 @@ We also provide the script to build new datasets.
 
 <br/>
 
-## (2) 风格转移与生成的简单流程
+## (2) 风格化的流程
 
 ### Inference Notebook 
 <a href="http://colab.research.google.com/github/williamyang1991/DualStyleGAN/blob/master/notebooks/inference_playground.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" height=22.5></a>  
-To help users get started, we provide a Jupyter notebook found in `./notebooks/inference_playground.ipynb` that allows one to visualize the performance of DualStyleGAN.
-The notebook will download the necessary pretrained models and run inference on the images found in `./data/`.
 
-If no GPU is available, you may refer to [Inference on CPU](./model/stylegan/op_cpu#readme), and set `device = 'cpu'` in the notebook.
+我们提供了 Jupyter notebook (路径为 `./notebooks/inference_playground.ipynb`) 供用户体验 DualStyleGAN 的实际表现.
+这个 notebook 笔记将会下载必要的预训练模型，然后以 `./data/` 中的图片为例进行风格迁移.
+
+
+如果没有 GPU 供使用，可以参考[CPU下运行](./model/stylegan/op_cpu#readme)，需要在 notebook 中设置 `device = 'cpu'`.
+
 
 ### 模型的预处理
 
-Pretrained models can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1GZQ6Gs5AzJq9lUL-ldIQexi0JYPKNy8b?usp=sharing) or [Baidu Cloud](https://pan.baidu.com/s/1sOpPszHfHSgFsgw47S6aAA ) (access code: cvpr):
+预训练模型可以通过 [Google Drive](https://drive.google.com/drive/folders/1GZQ6Gs5AzJq9lUL-ldIQexi0JYPKNy8b?usp=sharing) 或 [百度云|Baidu Cloud](https://pan.baidu.com/s/1sOpPszHfHSgFsgw47S6aAA ) (密码: cvpr) 进行下载.
 
 | Model | Description |
 | :--- | :--- |
@@ -83,7 +90,7 @@ Pretrained models can be downloaded from [Google Drive](https://drive.google.com
 | [illustration](https://drive.google.com/drive/folders/1ESQBW5rmXqWss3yTjIUOr8Di7R_er-o8?usp=sharing) | DualStyleGAN models trained on Illustration dataset, 156 extrinsic style codes |
 | [impasto](https://drive.google.com/drive/folders/1d0Lb-B7ozphXLywRjVLXQI0PTC5PESfn?usp=sharing) | DualStyleGAN models trained on Impasto dataset, 120 extrinsic style codes |
 
-The saved checkpoints are under the following folder structure:
+模型的 `checkpoints` 遵循如下的目录结构:
 ```
 checkpoint
 |--encoder.pt                     % Pixel2style2pixel model
@@ -103,8 +110,9 @@ Transfer the style of a default Cartoon image onto a default face:
 ```python
 python style_transfer.py 
 ```
-The result `cartoon_transfer_53_081680.jpg` is saved in the folder `.\output\`,
-where `53` is the id of the style image in the Cartoon dataset, `081680` is the name of the content face image.
+结果图 `cartoon_transfer_53_081680.jpg` 保存至 `.\output\`,
+
+其中， `53` 是 卡通数据集(Cartoon dataset)的风格ID, `081680` is the name of the content face image.
 An corresponding overview image `cartoon_transfer_53_081680_overview.jpg` is additionally saved to illustrate the input content image, the encoded content image, the style image (* the style image will be shown only if it is in your folder), and the result: 
 
 <img src="./output/cartoon_transfer_53_081680_overview.jpg">
@@ -131,18 +139,20 @@ python style_transfer.py --content ./data/content/unsplash-rDEOVtE7vOs.jpg --ali
 
 Specify `--wplus` to use the original pSp encoder to extract the W+ intrinsic style code, which may better preserve the face features of the content image.
 
-**Remarks**: Our trained pSp encoder on Z+/W+ space cannot perfectly encode the content image. If the style transfer result more consistent with the content image is desired, one may use latent optimization to better fit the content image or using other StyleGAN encoders (as discussed in https://github.com/williamyang1991/DualStyleGAN/issues/11 and https://github.com/williamyang1991/DualStyleGAN/issues/29).
-
-More options can be found via `python style_transfer.py  -h`.
+**评价**: 我们在 Z+/W+ 空间中训练好的 pSp 编码器(encoder) 并不能完美地编码出 the content image. 如果希望风格化之后的结果与 content image 更加一致，可以使用潜在优化来更好地适应内容图像或使用其他 StyleGAN 编码器(如 https://github.com/williamyang1991/DualStyleGAN/issues/11 和 https://github.com/williamyang1991/DualStyleGAN/issues/29 中的讨论).
 
 
-### Artistic Portrait Generation
-Generate random Cartoon face images (Results are saved in the `./output/` folder):
+> 可通过 `python style_transfer.py  -h` 查询更多选项.
+
+
+### 生成艺术画
+
+首先，生成随机卡通人脸图像 (结果保存在 `./output/` folder):
 ```python
 python generate.py 
 ```
 
-Specify the style type with `--style` and the filename of the saved images with `--name`:
+可通过 `--style` 指定 Style， `--name` 指定保存的图像文件名:
 ```python
 python generate.py --style arcane --name arcane_generate
 ```
@@ -154,8 +164,8 @@ Keep the intrinsic style code, extrinsic color code or extrinsic structure code 
 python generate.py --style caricature --name caricature_generate --weight 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 --fix_content
 ```
 
-More options can be found via `python generate.py -h`.
 
+> 可通过 `python generate.py -h` 查询更多选项.
 <br/>
 
 ## (3) 训练 DualStyleGAN
@@ -175,8 +185,11 @@ More options can be found via `python generate.py -h`.
 python ./model/stylegan/prepare_data.py --out LMDB_PATH --n_worker N_WORKER --size SIZE1,SIZE2,SIZE3,... DATASET_PATH
 ```
 
+
 例如, 下载 317 张 `Cartoon` 图像 保存于 `./data/cartoon/images/train/` 中，然后运行：
-> python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 --size 1024 ./data/cartoon/images/
+```python
+python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 --size 1024 ./data/cartoon/images/
+```
 
 其中的 `1024` 即是 `Cartoon` 数据集中每张图像的长宽。
 
@@ -185,10 +198,13 @@ python ./model/stylegan/prepare_data.py --out LMDB_PATH --n_worker N_WORKER --si
 python -m torch.distributed.launch --nproc_per_node=N_GPU --master_port=PORT finetune_stylegan.py --batch BATCH_SIZE \
        --ckpt FFHQ_MODEL_PATH --iter ITERATIONS --style DATASET_NAME --augment LMDB_PATH
 ```
+
 继续以 `cartoon dataset` 为例, 运行 (建议将 batch size of 设置为 8\*4=32)
-> python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_stylegan.py --iter 600
+```python
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_stylegan.py --iter 600
                           --batch 4 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon
                           --augment ./data/cartoon/lmdb/
+```
 
 fine-tuned model 模型将会 放入 `./checkpoint/cartoon/finetune-000600.pt`. 中间结果或数据放入 `./log/cartoon/`.
 
@@ -196,8 +212,11 @@ fine-tuned model 模型将会 放入 `./checkpoint/cartoon/finetune-000600.pt`. 
 ```python
 python destylize.py --model_name FINETUNED_MODEL_NAME --batch BATCH_SIZE --iter ITERATIONS DATASET_NAME
 ```
+
 继续以 `cartoon dataset` 为例, 运行:
-> python destylize.py --model_name finetune-000600.pt --batch 1 --iter 300 cartoon
+```python
+python destylize.py --model_name finetune-000600.pt --batch 1 --iter 300 cartoon
+```
 
 内外部风格(Style)将会分别存放于 `./checkpoint/cartoon/instyle_code.npy` 和 `./checkpoint/cartoon/exstyle_code.npy`之中, 中间结果或数据放入`./log/cartoon/destylization/`.
 
