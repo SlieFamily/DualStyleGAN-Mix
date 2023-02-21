@@ -105,20 +105,28 @@ checkpoint
 ...
 ```
 
-### Exemplar-Based Style Transfer
-Transfer the style of a default Cartoon image onto a default face:
+### 人脸风格化示例
+对一张默认的人脸图利用 Cartoon Style 进行风格迁移:
 ```python
 python style_transfer.py 
 ```
+
 结果图 `cartoon_transfer_53_081680.jpg` 保存至 `.\output\`,
 
-其中， `53` 是 卡通数据集(Cartoon dataset)的风格ID, `081680` is the name of the content face image.
-An corresponding overview image `cartoon_transfer_53_081680_overview.jpg` is additionally saved to illustrate the input content image, the encoded content image, the style image (* the style image will be shown only if it is in your folder), and the result: 
+其中， `53` 是 卡通数据集(Cartoon dataset)的风格ID, `081680` 是 content face image 的名字.
+额外保存相应的概览图 `cartoon_transfer_53_081680_overview.jpg` 以说明输入内容图像、编码内容图像、样式图像（* 样式图像只有在文件夹中才会显示）
 
+结果如下：
 <img src="./output/cartoon_transfer_53_081680_overview.jpg">
 
-Specify the style image with `--style` and `--style_id` (find the mapping between id and filename [here](./data_preparation/id_filename_list.txt), find the visual mapping between id and the style image [here](./doc_images)). Specify the filename of the saved images with `--name`. Specify the weight to adjust the degree of style with `--weight`.
-The following script generates the style transfer results in the teaser of the paper. 
+可以通过 `--style` 和 `--style_id` 指定风格样式 ([点击此处](./data_preparation/id_filename_list.txt)查看 , find the visual mapping between id and the style image [here](./doc_images)). 
+
+可以通过 `--name` 指定结果图文件的名字. 
+
+Specify the weight to adjust the degree of style with `--weight`.
+
+
+下面展示的是论文摘要中的风格迁移结果以及对应的命令/脚本。
 ```python
 python style_transfer.py
 python style_transfer.py --style cartoon --style_id 10
@@ -128,7 +136,10 @@ python style_transfer.py --style anime --name anime_transfer --style_id 17 --wei
 python style_transfer.py --style anime --name anime_transfer --style_id 48 --weight 0 0 0 0 0.75 0.75 0.75 1 1 1 1 1 1 1 1 1 1 1
 ```
 
-Specify the content image with `--content`. If the content image is not well aligned with FFHQ, use `--align_face`. For preserving the color style of the content image, use `--preserve_color` or set the last 11 elements of `--weight` to all zeros.
+可以通过 `--content` 指定content image. 如果 content image 无法与 FFHQ 进行规格匹配, 可以添加上 `--align_face`. 
+
+如需保留content image 的颜色样式，可使用 `--preserve_color` 或将 `--weight` 的最后 11 个元素全置零。
+
 ```python
 python style_transfer.py --content ./data/content/unsplash-rDEOVtE7vOs.jpg --align_face --preserve_color \
        --style arcane --name arcane_transfer --style_id 13 \
@@ -137,7 +148,7 @@ python style_transfer.py --content ./data/content/unsplash-rDEOVtE7vOs.jpg --ali
 
 <img src="https://user-images.githubusercontent.com/18130694/159124661-fbb58871-7c7b-449f-95b5-83e44f5973e8.jpg" width="32%"> → <img src="./output/arcane_transfer_13_unsplash-rDEOVtE7vOs_overview.jpg" width="64%">
 
-Specify `--wplus` to use the original pSp encoder to extract the W+ intrinsic style code, which may better preserve the face features of the content image.
+可通过 `--wplus` 以指定使用原始 pSp 编码器提取 W+ 固有样式代码，这可能会更好地保留 content image 的人脸特征。
 
 **评价**: 我们在 Z+/W+ 空间中训练好的 pSp 编码器(encoder) 并不能完美地编码出 the content image. 如果希望风格化之后的结果与 content image 更加一致，可以使用潜在优化来更好地适应内容图像或使用其他 StyleGAN 编码器(如 https://github.com/williamyang1991/DualStyleGAN/issues/11 和 https://github.com/williamyang1991/DualStyleGAN/issues/29 中的讨论).
 
@@ -177,7 +188,7 @@ python generate.py --style caricature --name caricature_generate --weight 1 1 1 
 | [stylegan2-ffhq-config-f.pt](https://drive.google.com/file/d/1EM87UquaoQmk17Q8d5kYIAHqu0dkYqdT/view) | StyleGAN model trained on FFHQ taken from [rosinality](https://github.com/rosinality/stylegan2-pytorch). |
 | [model_ir_se50.pth](https://drive.google.com/file/d/1KW7bjndL3QG3sxBbZxreGHigcCCpsDgn/view?usp=sharing) | Pretrained IR-SE50 model taken from [TreB1eN](https://github.com/TreB1eN/InsightFace_Pytorch) for ID loss. |
 
-### Facial Destylization
+### 面部风格提取
 
 **Step 1:数据准备.** 将数据集放入 `./data/DATASET_NAME/images/train/`目录. 
 首先生成 [lmdb](https://zhuanlan.zhihu.com/p/70359311/) 数据集:
@@ -197,7 +208,7 @@ python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 
 其中的 `1024` 即是 `Cartoon` 数据集中每张图像的长宽。
 
 
-**Step 2: Fine-tune StyleGAN.** Fine-tune StyleGAN in distributed settings:
+**Step 2: 微调 StyleGAN.** Fine-tune StyleGAN in distributed settings:
 ```python
 python -m torch.distributed.launch --nproc_per_node=N_GPU 
                                    --master_port=PORT finetune_stylegan.py 
@@ -219,7 +230,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetun
 fine-tuned model 模型将会 放入 `./checkpoint/cartoon/finetune-000600.pt`. 中间结果或数据放入 `./log/cartoon/`.
 
 
-**Step 3: Destylize artistic portraits.** 
+**Step 3: 风格提取.** 
 ```python
 python destylize.py --model_name FINETUNED_MODEL_NAME 
                     --batch BATCH_SIZE 
@@ -301,17 +312,24 @@ python refine_exstyle.py --lr_color COLOR_LEARNING_RATE --lr_structure STRUCTURE
 python refine_exstyle.py --lr_color 0.1 --lr_structure 0.005 --ckpt ./checkpoint/cartoon/generator-001400.pt cartoon
 ```
 
-The refined extrinsic style codes are saved in `./checkpoint/DATASET_NAME/refined_exstyle_code.npy`. `lr_color` and `lr_structure` are suggested to be tuned to better fit the example styles.
+完善得到的更精致的外部风格特征保存在 `./checkpoint/DATASET_NAME/refined_exstyle_code.npy`中. 
 
-**Training sampling network.** Train a sampling network to map unit Gaussian noises to the distribution of extrinsic style codes:
+可通过调整参数`lr_color` 和 `lr_structure` 以获得更好的效果.
+
+
+**训练采样网络.** 训练采样网络以将单位高斯噪声映射到外部风格特征的分布:
+
 ```python
 python train_sampler.py DATASET_NAME
 ```
-By default, the code will load `refined_exstyle_code.npy` or `exstyle_code.npy` in `./checkpoint/DATASET_NAME/`. Use `--exstyle_path` to specify other saved extrinsic style codes. The saved model can be found in `./checkpoint/DATASET_NAME/sampler.pt`.
+
+默认情况下, 上述命令将从 `./checkpoint/DATASET_NAME/` 中加载 `refined_exstyle_code.npy` 或 `exstyle_code.npy` 文件 . 
+
+可使用 `--exstyle_path` 指定其他已保存的外部风格特征. 已保存的模型存入 `./checkpoint/DATASET_NAME/sampler.pt`.
 
 <br/>
 
-## (4) Results
+## (4) 结果展示
 
 #### Exemplar-based cartoon style trasnfer
 
@@ -342,9 +360,9 @@ Trained with these images, DualStyleGAN is able to pastiche these famous artists
 </div>
 
 
-## Citation
+## 引用本文
 
-If you find this work useful for your research, please consider citing our paper:
+如果你认为本项目内容对你的研究有帮助的话，还请**引用**:
 
 ```bibtex
 @inproceedings{yang2022Pastiche,
@@ -355,6 +373,6 @@ If you find this work useful for your research, please consider citing our paper
 }
 ```
 
-## Acknowledgments
+## 致谢
 
-The code is mainly developed based on [stylegan2-pytorch](https://github.com/rosinality/stylegan2-pytorch) and [pixel2style2pixel](https://github.com/eladrich/pixel2style2pixel).
+本项目代码主要基于 [stylegan2-pytorch](https://github.com/rosinality/stylegan2-pytorch) 和 [pixel2style2pixel](https://github.com/eladrich/pixel2style2pixel) 实现.
