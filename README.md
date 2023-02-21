@@ -9,14 +9,14 @@ In CVPR 2022.<br>
 
 [**项目主页**](https://www.mmlab-ntu.com/project/dualstylegan/) | [**论文**](https://arxiv.org/abs/2203.13248) | [**相关视频**](https://www.youtube.com/watch?v=scZTu77jixI)
 
-> **摘要:** <br>
+> **摘要：** <br>
 > *近期，在学习 StyleGAN 的过程中我们发现，StyleGAN 只通过有限数据的训练学习，就在人脸艺术肖像风格迁移（下称 **人脸风格化** 或 **人像风格转移**） 工作中表现得很出色。*
 *在本文中，我们通过引入一种名为 DualStyleGAN 的较新颖的技术来探索更具挑战性的基于样本的高分辨率人脸风格化，可以灵活控制原始人脸和艺术肖像方面的双重风格。*
 *不同于 StyleGAN，DualStyleGAN 分别通过**内在风格路径**和新的**外在风格路径**来表征图像内容和某个艺术画的风格（Style），以此来提供更自然的风格迁移方法。精心设计的外在风格路径使我们的模型能够分层调整颜色和复杂的结构风格，从而精确地贴合给出的风格图示。*
 *此外，我们还引入了一种新颖的渐进式微调方案，使得即使在对网络架构进行上述修改的情况下，也可以将模型的生成空间平滑地转换到目标风格上。*
 *实验证明， DualStyleGAN 在高质量的人像风格迁移和灵活的风格控制方面优于目前其他的先进的方法。*
 
-**关键词**:<br> 
+**关键词：**<br> 
 **High-Resolution** (1024) | **Training Data-Efficient** (~200 Images) | **Exemplar-Based Color and Structure Transfer**
 
 
@@ -182,7 +182,10 @@ python generate.py --style caricature --name caricature_generate --weight 1 1 1 
 **Step 1:数据准备.** 将数据集放入 `./data/DATASET_NAME/images/train/`目录. 
 首先生成 [lmdb](https://zhuanlan.zhihu.com/p/70359311/) 数据集:
 ```python
-python ./model/stylegan/prepare_data.py --out LMDB_PATH --n_worker N_WORKER --size SIZE1,SIZE2,SIZE3,... DATASET_PATH
+python ./model/stylegan/prepare_data.py --out LMDB_PATH 
+                                        --n_worker N_WORKER 
+                                        --size SIZE1,SIZE2,SIZE3,... 
+                                        DATASET_PATH
 ```
 
 
@@ -193,13 +196,20 @@ python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 
 
 其中的 `1024` 即是 `Cartoon` 数据集中每张图像的长宽。
 
+
 **Step 2: Fine-tune StyleGAN.** Fine-tune StyleGAN in distributed settings:
 ```python
-python -m torch.distributed.launch --nproc_per_node=N_GPU --master_port=PORT finetune_stylegan.py --batch BATCH_SIZE \
-       --ckpt FFHQ_MODEL_PATH --iter ITERATIONS --style DATASET_NAME --augment LMDB_PATH
+python -m torch.distributed.launch --nproc_per_node=N_GPU 
+                                   --master_port=PORT finetune_stylegan.py 
+                                   --batch BATCH_SIZE \
+                                   --ckpt FFHQ_MODEL_PATH 
+                                   --iter ITERATIONS 
+                                   --style DATASET_NAME 
+                                   --augment LMDB_PATH
 ```
 
-继续以 `cartoon dataset` 为例, 运行 (建议将 batch size of 设置为 8\*4=32)
+
+以 `cartoon dataset` 为例, 运行 (建议将 batch size of 设置为 8\*4=32)：
 ```python
 python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_stylegan.py --iter 600
                           --batch 4 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon
@@ -208,12 +218,16 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetun
 
 fine-tuned model 模型将会 放入 `./checkpoint/cartoon/finetune-000600.pt`. 中间结果或数据放入 `./log/cartoon/`.
 
+
 **Step 3: Destylize artistic portraits.** 
 ```python
-python destylize.py --model_name FINETUNED_MODEL_NAME --batch BATCH_SIZE --iter ITERATIONS DATASET_NAME
+python destylize.py --model_name FINETUNED_MODEL_NAME 
+                    --batch BATCH_SIZE 
+                    --iter ITERATIONS DATASET_NAME
 ```
 
-继续以 `cartoon dataset` 为例, 运行:
+
+以 `cartoon dataset` 为例, 运行:
 ```python
 python destylize.py --model_name finetune-000600.pt --batch 1 --iter 300 cartoon
 ```
@@ -225,36 +239,67 @@ python destylize.py --model_name finetune-000600.pt --batch 1 --iter 300 cartoon
 对于与真实面孔严重不同的 Style，可设置 `--truncation` 为较小的值，比如 0.5，以使结果更逼真（它使 DualStyleGAN 能够学习更大的结构变形）。
 
 
-### Progressive Fine-Tuning 
+### 渐进微调 
 
-**Stage 1 & 2: Pretrain DualStyleGAN on FFHQ.** 
-We provide our pretrained model [generator-pretrain.pt](https://drive.google.com/file/d/1j8sIvQZYW5rZ0v1SDMn2VEJFqfRjMW3f/view?usp=sharing) at [Google Drive](https://drive.google.com/drive/folders/1GZQ6Gs5AzJq9lUL-ldIQexi0JYPKNy8b?usp=sharing) or [Baidu Cloud](https://pan.baidu.com/s/1sOpPszHfHSgFsgw47S6aAA ) (access code: cvpr). This model is obtained by:
-> python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 pretrain_dualstylegan.py --iter 3000
-                          --batch 4 ./data/ffhq/lmdb/
+**Stage 1 & 2: 在 FFHQ 中对 DualStyleGAN 进行预训练 .** 
 
-where `./data/ffhq/lmdb/` contains the lmdb data created from the FFHQ dataset via `./model/stylegan/prepare_data.py`.
+我们提供已训练好的预训练模型 [generator-pretrain.pt](https://drive.google.com/file/d/1j8sIvQZYW5rZ0v1SDMn2VEJFqfRjMW3f/view?usp=sharing) . 在 [Google Drive](https://drive.google.com/drive/folders/1GZQ6Gs5AzJq9lUL-ldIQexi0JYPKNy8b?usp=sharing) 或 [百度云|Baidu Cloud](https://pan.baidu.com/s/1sOpPszHfHSgFsgw47S6aAA ) (密码: cvpr) 中均可下载. 
 
-**Stage 3: Fine-Tune DualStyleGAN on Target Domain.** Fine-tune DualStyleGAN in distributed settings:
+该模型通过如下命令获得:
 ```python
-python -m torch.distributed.launch --nproc_per_node=N_GPU --master_port=PORT finetune_dualstylegan.py --iter ITERATIONS \ 
-                          --batch BATCH_SIZE --ckpt PRETRAINED_MODEL_PATH --augment DATASET_NAME
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 pretrain_dualstylegan.py --iter 3000
+                          --batch 4 ./data/ffhq/lmdb/
 ```
-The loss term weights can be specified by `--style_loss` (λ<sub>FM</sub>), `--CX_loss` (λ<sub>CX</sub>), `--perc_loss` (λ<sub>perc</sub>), `--id_loss` (λ<sub>ID</sub>) and `--L2_reg_loss` (λ<sub>reg</sub>). λ<sub>ID</sub> and λ<sub>reg</sub> are suggested to be tuned for each style dataset to achieve ideal performance. More options can be found via `python finetune_dualstylegan.py -h`.
 
-Take the Cartoon dataset as an example, run (multi-GPU enables a large batch size of 8\*4=32 for better performance):
-> python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_dualstylegan.py --iter 1500 --batch 4 --ckpt ./checkpoint/generator-pretrain.pt 
+其中 `./data/ffhq/lmdb/` 内包含通过 `./model/stylegan/prepare_data.py` 从 FFHQ 数据集创建的 lmdb 数据.
+
+
+**Stage 3: 在目标风格域中对 DualStyleGAN 微调.** 
+
+在分布式设置中微调 DualStyleGAN:
+```python
+python -m torch.distributed.launch --nproc_per_node=N_GPU 
+                                   --master_port=PORT finetune_dualstylegan.py 
+                                   --iter ITERATIONS \ 
+                                   --batch BATCH_SIZE 
+                                   --ckpt PRETRAINED_MODEL_PATH 
+                                   --augment DATASET_NAME
+```
+
+损失项的权重通过 `--style_loss` ($λ_{FM}$), `--CX_loss` ($λ_{CX}$), `--perc_loss` ($λ_{perc}$), `--id_loss` ($λ_{id}$) and `--L2_reg_loss` ($λ_{reg}$) 设置.
+
+建议针对每个不同风格的数据集，逐步调整 $λ_{id}$ 和 $λ_{reg}$ 以达到理想的效果. 
+
+> 可通过 `python finetune_dualstylegan.py -h` 查询更多选项.
+
+
+以 `cartoon dataset` 为例, 运行(multi-GPU 最大支持 `batch size` 为 8\*4=32, 可获得较快的训练):
+```python
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=8765 finetune_dualstylegan.py --iter 1500 --batch 4 --ckpt ./checkpoint/generator-pretrain.pt 
 --style_loss 0.25 --CX_loss 0.25 --perc_loss 1 --id_loss 1 --L2_reg_loss 0.015 --augment cartoon
+```
 
-The fine-tuned models can be found in `./checkpoint/cartoon/generator-ITER.pt` where ITER = 001000, 001100, ..., 001500. Intermediate results are saved in `./log/cartoon/`. Large ITER has strong cartoon styles but at the cost of artifacts, and users may select the most balanced one from 1000-1500. We use 1400 for our paper experiments.
+微调模型存入 `./checkpoint/cartoon/generator-ITER.pt` 重，其中的 ITER 取 001000, 001100, ..., 001500. 
 
-### (optional) Latent Optimization and Sampling
+中间结果或数据放入 `./log/cartoon/`. 较大的 ITER 有着更强的 cartoon styles 但却可能伴随着原图风格的损失。因此可能需要人工从 1000-1500 中选取更加平衡的结果. 在我们的论文里，我们选取的值为 1400.
 
-**Refine extrinsic style code.** Refine the color and structure styles to better fit the example style images.
+
+### （可选）潜在优化和采样
+
+**完善外部风格 |<sub>extrinsic style code</sub>.**  优化颜色和结构风格以更好地适应Sample 图像。
+
 ```python 
 python refine_exstyle.py --lr_color COLOR_LEARNING_RATE --lr_structure STRUCTURE_LEARNING_RATE DATASET_NAME
 ```
-By default, the code will load `instyle_code.npy`, `exstyle_code.npy`, and `generator.pt` in `./checkpoint/DATASET_NAME/`. Use `--instyle_path`, `--exstyle_path`, `--ckpt` to specify other saved style codes or models. Take the Cartoon dataset as an example, run:
-> python refine_exstyle.py --lr_color 0.1 --lr_structure 0.005 --ckpt ./checkpoint/cartoon/generator-001400.pt cartoon
+
+默认情况下, 此命令会 加载存放在 `./checkpoint/DATASET_NAME/` 中的 `instyle_code.npy`, `exstyle_code.npy` 和 `generator.pt`. 
+可使用 `--instyle_path`, `--exstyle_path`, `--ckpt` 指定其他保存的 Style 或模型. 
+
+
+以 `cartoon dataset` 为例, 运行:
+```python
+python refine_exstyle.py --lr_color 0.1 --lr_structure 0.005 --ckpt ./checkpoint/cartoon/generator-001400.pt cartoon
+```
 
 The refined extrinsic style codes are saved in `./checkpoint/DATASET_NAME/refined_exstyle_code.npy`. `lr_color` and `lr_structure` are suggested to be tuned to better fit the example styles.
 
