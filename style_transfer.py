@@ -10,10 +10,16 @@ import torchvision
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
+
+
 class TestOptions():
     def __init__(self):
-
+        # argparse 模块是 Python 内置的用于命令项选项与参数解析的模块
+        # 创建一个命令行解析器对象 ——创建 ArgumentParser() 对象
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
+        
+        
+        # 给解析器添加命令行参数 ——调用add_argument() 方法添加参数
         self.parser.add_argument("--content", type=str, default='./data/content/081680.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
         self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
@@ -29,22 +35,41 @@ class TestOptions():
         self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
         self.parser.add_argument("--wplus", action="store_true", help="use original pSp encoder to extract the intrinsic style code")
 
+
+    # 定义解析参数的函数/方法
     def parse(self):
+
+        # 自动解析命令行的参数 ——使用 parse_args() 解析添加的参数
+        # 对本程序来说，相当于 self.opt 中就已经解析有成员变量：style、style_id、truncation等
         self.opt = self.parser.parse_args()
+
+        # 设置 option 的 外部风格标识
+        # 如果存在优化过的模型，就使用其文件名
+        # 否则默认用 exstyle_code.npy
         if self.opt.exstyle_name is None:
             if os.path.exists(os.path.join(self.opt.model_path, self.opt.style, 'refined_exstyle_code.npy')):
                 self.opt.exstyle_name = 'refined_exstyle_code.npy'
             else:
-                self.opt.exstyle_name = 'exstyle_code.npy'        
+                self.opt.exstyle_name = 'exstyle_code.npy'
+
+        # vars() 函数 解析出 opt 的键值对字典
         args = vars(self.opt)
-        print('Load options')
+
+        # 依次打印所设置的参数/options
+        print('Load options……')
         for name, value in sorted(args.items()):
             print('%s: %s' % (str(name), str(value)))
+        
         return self.opt
-    
+
+
+
+# 图像规格化
 def run_alignment(args):
-    import dlib
-    from model.encoder.align_all_parallel import align_face
+    import dlib # 一个机器学习的开源库
+    from model.encoder.align_all_parallel import align_face #人脸规格化，作者：lzhbrian
+
+    # 导入/下载 人脸识别68个特征点检测数据库
     modelname = os.path.join(args.model_path, 'shape_predictor_68_face_landmarks.dat')
     if not os.path.exists(modelname):
         import wget, bz2
@@ -53,15 +78,19 @@ def run_alignment(args):
         data = zipfile.read()
         open(modelname, 'wb').write(data) 
     predictor = dlib.shape_predictor(modelname)
+
+    # 通过检测点和input的原始图片 content 进行规格化
     aligned_image = align_face(filepath=args.content, predictor=predictor)
     return aligned_image
 
 
 if __name__ == "__main__":
+    
     device = "cuda"
 
-    parser = TestOptions()
-    args = parser.parse()
+    parser = TestOptions() # 创建解析器
+    args = parser.parse() # 获取参数信息
+
     print('*'*98)
     
     transform = transforms.Compose([
