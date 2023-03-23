@@ -20,9 +20,9 @@ class TestOptions():
         
         
         # 给解析器添加命令行参数 ——调用add_argument() 方法添加参数
-        self.parser.add_argument("--content", type=str, default='./data/content/081680.jpg', help="path of the content image")
-        self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
-        self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
+        self.parser.add_argument("--content", type=str, default='./data/content/081680.jpg', help="原始图像(content image)的路径")
+        self.parser.add_argument("--style", type=str, default='cartoon', help="目标风格名称（target style type）")
+        self.parser.add_argument("--style_id", type=int, default=53, help="风格图像的ID")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
         self.parser.add_argument("--weight", type=float, nargs=18, default=[0.75]*7+[1]*11, help="weight of the extrinsic style")
         self.parser.add_argument("--name", type=str, default='cartoon_transfer', help="filename to save the generated images")
