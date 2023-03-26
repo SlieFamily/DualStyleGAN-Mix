@@ -1,5 +1,9 @@
+import os
+import numpy as np
+import pathlib
 import gradio as gr
 
+import torch
 from torchvision import transforms
 from torch.nn import functional as F 
 import torchvision
@@ -7,6 +11,7 @@ import torchvision
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
+device = "cuda"
 
 transform = transforms.Compose([ # 用Compose把多个步骤整合到一起
     transforms.ToTensor(), # 把一个PIL/Numpy.ndarray类型的图片转化为tensor类型
@@ -26,7 +31,7 @@ generator.load_state_dict(ckpt["g_ema"])
 generator = generator.to(device)
 
 # 外部风格编码
-exstyles = np.load(os.path.join('./checkpoint/', 'metfaces', None), allow_pickle='TRUE').item()
+exstyles = np.load(os.path.join('./checkpoint/', 'metfaces', 'exstyle_code.npy'), allow_pickle='TRUE').item()
 
 
 
@@ -74,7 +79,7 @@ def reconstruct_face(image, encoder_type):
     opts['checkpoint_path'] = model_path
     pts['output_size'] = 1024    
     opts = Namespace(**opts)
-    opts.device = "cuda"
+    opts.device = device
     encoder = pSp(opts)
     encoder.eval()
     encoder.to(device)
@@ -163,7 +168,7 @@ def main():
             # 图像选择示例
             with gr.Row():
                 paths = sorted(pathlib.Path('data/content').glob('*.jpg'))
-                example_images = gr.Dataset(label = '示例图选'，
+                example_images = gr.Dataset(label = '示例图选',
                                             components = [input_image],
                                             samples = [[path.as_posix()]
                                                      for path in paths])                    
