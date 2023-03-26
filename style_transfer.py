@@ -1,12 +1,16 @@
 import os
 import numpy as np
 import torch
+
 from util import save_image, load_image
-import argparse
+
+import argparse # 命令参数解析库
 from argparse import Namespace
+
 from torchvision import transforms
-from torch.nn import functional as F
+from torch.nn import functional as F 
 import torchvision
+
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
@@ -24,16 +28,16 @@ class TestOptions():
         self.parser.add_argument("--style", type=str, default='cartoon', help="目标风格名称（target style type）")
         self.parser.add_argument("--style_id", type=int, default=53, help="风格图像的ID")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
-        self.parser.add_argument("--weight", type=float, nargs=18, default=[0.75]*7+[1]*11, help="weight of the extrinsic style")
-        self.parser.add_argument("--name", type=str, default='cartoon_transfer', help="filename to save the generated images")
-        self.parser.add_argument("--preserve_color", action="store_true", help="preserve the color of the content image")
-        self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="path of the saved models")
-        self.parser.add_argument("--model_name", type=str, default='generator.pt', help="name of the saved dualstylegan")
-        self.parser.add_argument("--output_path", type=str, default='./output/', help="path of the output images")
-        self.parser.add_argument("--data_path", type=str, default='./data/', help="path of dataset")
-        self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
-        self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
-        self.parser.add_argument("--wplus", action="store_true", help="use original pSp encoder to extract the intrinsic style code")
+        self.parser.add_argument("--weight", type=float, nargs=18, default=[0.75]*7+[1]*11, help="外部风格尺度")
+        self.parser.add_argument("--name", type=str, default='cartoon_transfer', help="保存生成图像的文件名")
+        self.parser.add_argument("--preserve_color", action="store_true", help="保持原始图像的色彩")
+        self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="模型存放地址")
+        self.parser.add_argument("--model_name", type=str, default='generator.pt', help="风格模型名称")
+        self.parser.add_argument("--output_path", type=str, default='./output/', help="生成图像的保存路径")
+        self.parser.add_argument("--data_path", type=str, default='./data/', help="数据集路径")
+        self.parser.add_argument("--align_face", action="store_true", help="对原始图像进行人脸规格化")
+        self.parser.add_argument("--exstyle_name", type=str, default=None, help="外部风格编码的名称")
+        self.parser.add_argument("--wplus", action="store_true", help="使用原始 pSp encoder 进行内部风格编码的提取")
 
 
     # 定义解析参数的函数/方法
@@ -56,7 +60,7 @@ class TestOptions():
         args = vars(self.opt)
 
         # 依次打印所设置的参数/options
-        print('Load options……')
+        print('加载配置中……')
         for name, value in sorted(args.items()):
             print('%s: %s' % (str(name), str(value)))
         
@@ -77,9 +81,10 @@ def run_alignment(args):
         zipfile = bz2.BZ2File(modelname+'.bz2')
         data = zipfile.read()
         open(modelname, 'wb').write(data) 
-    predictor = dlib.shape_predictor(modelname)
 
-    # 通过检测点和input的原始图片 content 进行规格化
+    predictor = dlib.shape_predictor(modelname) #返回训练好的人脸68特征点检测器
+
+    # 通过检测点和原始图像进行规格化
     aligned_image = align_face(filepath=args.content, predictor=predictor)
     return aligned_image
 
@@ -93,25 +98,35 @@ if __name__ == "__main__":
 
     print('*'*98)
     
-    transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
+    # 返回具有类型转换和归一化功能的函数transform
+    transform = transforms.Compose([ # 用Compose把多个步骤整合到一起
+        transforms.ToTensor(), # 把一个PIL/Numpy.ndarray类型的图片转化为tensor类型
+        transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
+        # 使用公式"(x-mean)/std"，将每个元素分布到(-1,1)
     ])
     
+    # 生成器
     generator = DualStyleGAN(1024, 512, 8, 2, res_index=6)
     generator.eval()
 
+    # map_location=lambda storage, loc:storage 把所有的张量加载到GPU 1中
     ckpt = torch.load(os.path.join(args.model_path, args.style, args.model_name), map_location=lambda storage, loc: storage)
+    
     generator.load_state_dict(ckpt["g_ema"])
     generator = generator.to(device)
     
+    # 选择编码器
     if args.wplus:
         model_path = os.path.join(args.model_path, 'encoder_wplus.pt')
     else:
         model_path = os.path.join(args.model_path, 'encoder.pt')
+
+
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
+    
+    # 默认输出尺寸 1024*1024
     if 'output_size' not in opts:
         opts['output_size'] = 1024    
     opts = Namespace(**opts)
@@ -120,25 +135,28 @@ if __name__ == "__main__":
     encoder.eval()
     encoder.to(device)
 
+    # 读取外部风格数据
     exstyles = np.load(os.path.join(args.model_path, args.style, args.exstyle_name), allow_pickle='TRUE').item()
 
-    z_plus_latent=not args.wplus
-    return_z_plus_latent=not args.wplus
-    input_is_latent=args.wplus    
+    z_plus_latent = not args.wplus
+    return_z_plus_latent = not args.wplus
+    input_is_latent = args.wplus    
     
-    print('Load models successfully!')
+    print('模型加载成功!')
     
-    with torch.no_grad():
+
+    # 当前计算不需要反向传播，使用之后 with torch.no_grad()，强制后边的内容不进行计算图的构建
+    with torch.no_grad(): 
         viz = []
-        # load content image
+        # 加载原始图像
         if args.align_face:
-            I = transform(run_alignment(args)).unsqueeze(dim=0).to(device)
-            I = F.adaptive_avg_pool2d(I, 1024)
+            I = transform(run_alignment(args)).unsqueeze(dim = 0).to(device)
+            I = F.adaptive_avg_pool2d(I, 1024) #自适应平均池化
         else:
             I = load_image(args.content).to(device)
         viz += [I]
 
-        # reconstructed content image and its intrinsic style code
+        # 重构原始图像及其内在风格编码
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                    z_plus_latent=z_plus_latent, return_z_plus_latent=return_z_plus_latent, resize=False)  
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
@@ -148,18 +166,19 @@ if __name__ == "__main__":
         latent = torch.tensor(exstyles[stylename]).to(device)
         if args.preserve_color and not args.wplus:
             latent[:,7:18] = instyle[:,7:18]
-        # extrinsic styte code
+        
+        # 外部风格编码
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
         if args.preserve_color and args.wplus:
             exstyle[:,7:18] = instyle[:,7:18]
             
-        # load style image if it exists
+        # 加载风格图像
         S = None
         if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
             S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
             viz += [S]
 
-        # style transfer 
+        # 风格迁移
         # input_is_latent: instyle is not in W space
         # z_plus_latent: instyle is in Z+ space
         # use_res: use extrinsic style path, or the style is not transferred
@@ -169,11 +188,14 @@ if __name__ == "__main__":
         img_gen = torch.clamp(img_gen.detach(), -1, 1)
         viz += [img_gen]
 
-    print('Generate images successfully!')
+    print('图像生成成功!')
     
     save_name = args.name+'_%d_%s'%(args.style_id, os.path.basename(args.content).split('.')[0])
+
+    # 保存过程图像（拼接viz中的4幅图）
     save_image(torchvision.utils.make_grid(F.adaptive_avg_pool2d(torch.cat(viz, dim=0), 256), 4, 2).cpu(), 
                os.path.join(args.output_path, save_name+'_overview.jpg'))
+    # 保存生成图像
     save_image(img_gen[0].cpu(), os.path.join(args.output_path, save_name+'.jpg'))
 
-    print('Save images successfully!')
+    print('图像保存成功!')
