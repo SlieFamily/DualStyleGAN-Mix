@@ -2,12 +2,12 @@ import os
 import numpy as np
 import pathlib
 import gradio as gr
-
+from PIL import Image
 import torch
 from torchvision import transforms
 from torch.nn import functional as F 
 import torchvision
-
+import argparse
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
@@ -36,17 +36,13 @@ exstyles = np.load(os.path.join('./checkpoint/', 'metfaces', 'exstyle_code.npy')
 
 
 # 图像规格化
-def run_alignment(img_path, rec_only):
+def run_alignment(img_path):
 
     import dlib # 一个机器学习的开源库
     from model.encoder.align_all_parallel import align_face #人脸规格化，作者：lzhbrian
 
-    # 若图像已规格化，直接返回
-    if rec_only == True:
-        return PIL.Image.open(img_path)
-
     # 导入/下载 人脸识别68个特征点检测数据库
-    modelname = os.path.join(args.model_path, 'shape_predictor_68_face_landmarks.dat')
+    modelname = os.path.join('./checkpoint/', 'shape_predictor_68_face_landmarks.dat')
     if not os.path.exists(modelname):
         import wget, bz2
         wget.download('http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2', modelname+'.bz2')
@@ -61,31 +57,36 @@ def run_alignment(img_path, rec_only):
     return aligned_image
 
 
+def postprocess(tensor: torch.Tensor) -> np.ndarray:
+    tensor = torch.clamp((tensor + 1) / 2 * 255, 0, 255).to(torch.uint8)
+    return tensor.cpu().numpy().transpose(1, 2, 0)
+
+
 # 重构原始图像及其内在风格编码
 def reconstruct_face(image, encoder_type):
     # 选择编码器
     if encoder_type == 'W+ encoder':
         z_plus_latent = False
         return_z_plus_latent = False 
-        model_path = os.path.join(args.model_path, 'encoder_wplus.pt')
+        model_path = os.path.join('./checkpoint/', 'encoder_wplus.pt')
     else:  
         z_plus_latent = True
         return_z_plus_latent = True 
-        model_path = os.path.join(args.model_path, 'encoder.pt')
+        model_path = os.path.join('./checkpoint/', 'encoder.pt')
     
     # 加载编码器
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
-    pts['output_size'] = 1024    
-    opts = Namespace(**opts)
+    opts['output_size'] = 1024    
+    opts = argparse.Namespace(**opts)
     opts.device = device
     encoder = pSp(opts)
     encoder.eval()
     encoder.to(device)
 
     # 人脸重建
-    # image = PIL.Image.fromarray(image)
+    image = Image.fromarray(image)
     input_data = transform(image).unsqueeze(0).to(device)
 
     img_rec, instyle = encoder(input_data, 
@@ -95,7 +96,7 @@ def reconstruct_face(image, encoder_type):
                                 return_z_plus_latent = return_z_plus_latent,
                                 resize = False)  
     img_rec = torch.clamp(img_rec.detach(), -1, 1)
-    # img_rec = self.postprocess(img_rec[0])
+    img_rec = postprocess(img_rec[0])
 
     return img_rec, instyle
 
@@ -104,10 +105,10 @@ def reconstruct_face(image, encoder_type):
 def image_generate(encoder_type, style_index, structure_weight, color_weight, structure_only, instyle):
     if encoder_type == 'W+ encoder':
         z_plus_latent = False
-        return_z_plus_latent = False 
+        input_is_latent = True
     else:  
         z_plus_latent = True
-        return_z_plus_latent = True 
+        input_is_latent = False 
 
     stylename = list(exstyles.keys())[style_index]
     latent = torch.tensor(exstyles[stylename]).to(device)
@@ -126,7 +127,17 @@ def image_generate(encoder_type, style_index, structure_weight, color_weight, st
                             interp_weights = [structure_weight]*7+[color_weight]*11)
 
     img_gen = torch.clamp(img_gen.detach(), -1, 1)
+    img_gen = postprocess(img_gen[0])
     return img_gen
+
+def set_example_image(example: list) -> dict:
+    return gr.Image.update(value = example[0])
+
+def show_style_image(style_index: int) -> str:
+    url = list(exstyles.keys())[style_index]
+    return f'./data/metfaces/{url}'
+
+
 
 def main():
     # 指定webui的gradio主题和风格
@@ -147,10 +158,9 @@ def main():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        input_image = gr.Image(label='输入图片',
-                                               type='filepath')
-                    with gr.Row():
-                        rec_only = gr.Checkbox(label='仅人脸重建 (确保输入图片已进行人脸规格化)')                                               
+                        input_image = gr.Image(label = '输入图片',
+                                               type = 'filepath')
+                                             
                     with gr.Row():
                         preprocess_button = gr.Button('预处理')
                     
@@ -177,13 +187,13 @@ def main():
             with gr.Row():
                 with gr.Column():
                     # 显示油画图像选择预览图
-                    # text = get_style_image_markdown_text('cartoon')
-                    # style_image = gr.Markdown(value=text)
                     style_index = gr.Slider(0,
                                             316,
-                                            value=26,
-                                            step=1,
-                                            label='风格图像序号')
+                                            value = 26,
+                                            step = 1,
+                                            label = '风格图像序号')
+                    style_image = gr.Image(label = '预览',
+                                               type = 'filepath')                       
         with gr.Box():
             with gr.Row():
                 with gr.Column():
@@ -210,15 +220,21 @@ def main():
 
         # 预处理按钮点击执行
         preprocess_button.click(fn = run_alignment,
-                                inputs = [input_image, rec_only],
+                                inputs = [input_image],
                                 outputs = aligned_face)
+        # 选中样例图时
+        example_images.click(fn = set_example_image,
+                             inputs = example_images,
+                             outputs = example_images.components)
 
         aligned_face.change(fn = reconstruct_face,
                             inputs = [aligned_face, encoder_type],
-                            outputs=[
-                                reconstructed_face,
-                                instyle,
-                            ])
+                            outputs = [reconstructed_face,instyle])
+
+        # 选择风格图像
+        style_index.release(fn = show_style_image,
+                            inputs = [style_index.value],
+                            outputs = [style_image])
 
         # 生成风格图像按钮点击执行
         generate_button.click(fn = image_generate,

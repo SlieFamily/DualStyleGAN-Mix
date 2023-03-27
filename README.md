@@ -20,8 +20,11 @@ In CVPR 2022.<br>
 **High-Resolution** (1024) | **Training Data-Efficient** (~200 Images) | **Exemplar-Based Color and Structure Transfer**
 
 
-## 官方 Web Demo
-Web Demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/hysts/DualStyleGAN) or [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Gradio-Blocks/DualStyleGAN)
+## WebUI
+
+可通过在Colab或 Hugging Face Spaces 运行 `webui.py` 开启可视化界面。
+
+该 GUI 修改自官方 Web Demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/hysts/DualStyleGAN) or [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Gradio-Blocks/DualStyleGAN)
 
 
 ## 安装
