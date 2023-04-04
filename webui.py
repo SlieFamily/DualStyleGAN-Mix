@@ -32,7 +32,7 @@ generator = generator.to(device)
 
 # 外部风格编码
 exstyles = np.load(os.path.join('./checkpoint/', 'metfaces', 'exstyle_code.npy'), allow_pickle='TRUE').item()
-
+style_list = list(exstyles.keys())
 
 
 # 图像规格化
@@ -134,16 +134,17 @@ def set_example_image(example: list) -> dict:
     return gr.Image.update(value = example[0])
 
 def show_style_image(style_index: int) -> str:
-    url = list(exstyles.keys())[style_index]
-    return f'./data/metfaces/{url}'
+    url = style_list[style_index]
+    return f'./data/metfaces/images/train/{url}'
 
-
+def cat_all_images(aligned_face, style_path, result):
+    viz = [aligned_face, Image.open(style_path), result]
+    viz = torchvision.utils.make_grid(F.adaptive_avg_pool2d(torch.cat(viz, dim=0), 256), 4, 2).cpu()
+    return viz
 
 def main():
     # 指定webui的gradio主题和风格
-    with gr.Blocks(theme = gr.themes.Soft(spacing_size="lg",radius_size="lg"), 
-                   css='https://raw.githubusercontent.com/SlieFamily/DualStyleGAN-Mix/main/style.css'
-                    ) as demo:
+    with gr.Blocks(theme = gr.themes.Soft(spacing_size="lg",radius_size="lg")) as demo:
         
         # gr.HTML('<img src="https://s3.bmp.ovh/imgs/2023/03/23/cae0ab67b6d6b1d8.png" alt="top_image" style="margin: auto;"/>')
         
@@ -188,31 +189,34 @@ def main():
                 with gr.Column():
                     # 显示油画图像选择预览图
                     style_index = gr.Slider(0,
-                                            316,
+                                            len(style_list),
                                             value = 26,
                                             step = 1,
                                             label = '风格图像序号')
                     style_image = gr.Image(label = '预览',
                                                type = 'filepath')                       
-        with gr.Box():
-            with gr.Row():
+
                 with gr.Column():
                     with gr.Row():
                         structure_weight = gr.Slider(0,
                                                      1,
-                                                     value=0.6,
-                                                     step=0.1,
-                                                     label='结构风格权重')
+                                                     value = 0.6,
+                                                     step = 0.1,
+                                                     label = '结构风格权重')
                     with gr.Row():
                         color_weight = gr.Slider(0,
                                                  1,
-                                                 value=1,
-                                                 step=0.1,
-                                                 label='色彩风格权重')
+                                                 value = 1,
+                                                 step = 0.1,
+                                                 label = '色彩风格权重')
                     with gr.Row():
-                        structure_only = gr.Checkbox(label='仅结构风格')
+                        structure_only = gr.Checkbox(label = '仅结构风格')
                     with gr.Row():
                         generate_button = gr.Button('生成')
+                    with gr.Row():
+                        cat_images = gr.Image(label = '对比',
+                                            type = 'numpy',
+                                            interactive = False)                        
 
                 with gr.Column():
                     result = gr.Image(label='结果图',interactive=False)
@@ -233,7 +237,7 @@ def main():
 
         # 选择风格图像
         style_index.release(fn = show_style_image,
-                            inputs = [style_index.value],
+                            inputs = [style_index],
                             outputs = [style_image])
 
         # 生成风格图像按钮点击执行
@@ -247,6 +251,9 @@ def main():
                                   instyle,
                               ],
                               outputs = result)
+        cat_images.change(fn = cat_all_images,
+                         inputs = [aligned_face, style_image, result],
+                         outputs = [cat_images.components])
 
     # 启动webui
     demo.launch(
