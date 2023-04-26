@@ -1,22 +1,13 @@
-## saved models
+## 大剧院/油画风格数据集
 
-folder structure:
-```
-Checkpoint
-|--encoder.pt                             % Pixel2style2pixel model
-|--encoder_wplus.pt                       % Pixel2style2pixel model (optional)
-|--shape_predictor_68_face_landmarks.dat  % Face alignment model
-|--stylegan2-ffhq-config-f.pt             % (only for training) StyleGAN model
-|--model_ir_se50.pth                      % (only for training) Pretrained IR-SE50 model for ID loss 
-|--generator-pretrain.pt                  % (only for training) Pretrained DualStyleGAN on FFHQ
-|--cartoon
-    |--generator.pt                       % DualStyleGAN model
-    |--sampler.pt                         % The extrinsic style code sampling model
-    |--exstyle_code.npy                   % Extrinsic style codes of Cartoon dataset
-    |--refined_exstyle_code.npy           % Refined extrinsic style codes of Cartoon dataset
-    |--instyle_code.npy                   % (only for training) Intrinsic style codes of Cartoon dataset
-    |--finetune-000600.pt                 % (only for training) StyleGAN fine-tuned on Cartoon dataset
-|--caricature
-    % the same files as in Cartoon
-...
-```
+**MetFaces** （Metropolitan Faces）是从大剧院肖像艺术作品中提取的[人脸图像数据集](https://github.com/NVlabs/metfaces-dataset) 
+
+该数据集由 $1336$ 张分辨率为 $1024×1024$ 的高质量 PNG 图像组成，主要取自 Metropolitan Museum of Art Collection API 并通过智能裁剪形成。
+
+现已公布在 `Github` 中，被收集用于对**有限数据训练生成对抗网络**的研究。
+
+Karras T, Aittala M, Hellsten J, et al. Training generative adversarial networks with  limited data[J]. arXiv preprint arXiv:2006.06676, 2020
+
+---
+
+- 此处仅给出用于本项目训练使用的 $123$ 张有代表性的图像

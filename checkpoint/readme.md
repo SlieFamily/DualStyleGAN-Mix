@@ -1,6 +1,6 @@
-## saved models
+## 模型存储
 
-folder structure:
+文件结构：
 ```
 Checkpoint
 |--encoder.pt                             % Pixel2style2pixel model

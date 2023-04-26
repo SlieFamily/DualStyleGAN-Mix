@@ -1,0 +1,8 @@
+# GitHub项目中不会同步以下文件
+
+checkpoint/*.pt
+
+checkpoint/metfaces/*.pt
+
+data/metfaces/images/train/*.png
+
