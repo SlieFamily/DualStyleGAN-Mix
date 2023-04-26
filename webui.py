@@ -137,10 +137,6 @@ def show_style_image(style_index: int) -> str:
     url = style_list[style_index]
     return f'./data/metfaces/images/train/{url}'
 
-def cat_all_images(aligned_face, style_path, result):
-    viz = [aligned_face, Image.open(style_path), result]
-    viz = torchvision.utils.make_grid(F.adaptive_avg_pool2d(torch.cat(viz, dim=0), 256), 4, 2).cpu()
-    return viz
 
 def main():
     # 指定webui的gradio主题和风格
@@ -251,13 +247,10 @@ def main():
                                   instyle,
                               ],
                               outputs = result)
-        cat_images.change(fn = cat_all_images,
-                         inputs = [aligned_face, style_image, result],
-                         outputs = [cat_images.components])
 
     # 启动webui
     demo.launch(
-        share = True,
+       # share = True,
     )
 
 
